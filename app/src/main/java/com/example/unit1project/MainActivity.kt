@@ -1,14 +1,20 @@
 package com.example.unit1project
 
+import android.content.Context
+import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Handler
+import android.text.Spannable
+import android.text.SpannableStringBuilder
+import android.text.style.ForegroundColorSpan
 import android.view.View
+import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import nl.dionsegijn.konfetti.xml.KonfettiView
 import kotlinx.coroutines.runBlocking
 
 class MainActivity : AppCompatActivity() {
@@ -20,6 +26,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        val confetti = findViewById<KonfettiView>(R.id.konfettiView)
 
         val guess1TextView = findViewById<TextView>(R.id.guess1)
         val guess1CheckTextView = findViewById<TextView>(R.id.guess1Check)
@@ -61,6 +69,9 @@ class MainActivity : AppCompatActivity() {
         reset()
 
         submitButton.setOnClickListener{
+            // select all the entered text so that the user doesn't have enter backspace
+//            userInput.requestFocus()
+            userInput.selectAll()
             val enteredText = userInput.text.toString().uppercase()
             if (enteredText == ""){
                 Toast.makeText(applicationContext, "Enter something first", Toast.LENGTH_SHORT).show()
@@ -70,16 +81,18 @@ class MainActivity : AppCompatActivity() {
                 } else if (checkNonAlphabetic(enteredText)){
                     Toast.makeText(applicationContext, "Enter characters ONLY", Toast.LENGTH_SHORT).show()
                 } else{
+                    hideKeyboard()
                     attempts ++
                     val result = checkAnswer(actualWord, enteredText)
-//                    Toast.makeText(applicationContext, result, Toast.LENGTH_LONG).show()
+                    val colorfulResult = getColorfulString(enteredText, result)
+                    Toast.makeText(applicationContext, actualWord, Toast.LENGTH_LONG).show()
 
                     when (attempts) {
                         1 -> { // show guess 1 and its result
                             guess1TextView.visibility = View.VISIBLE
                             guess1CheckTextView.visibility = View.VISIBLE
                             guess1Entry.text = enteredText
-                            guess1Result.text = result
+                            guess1Result.text = colorfulResult // result
                             guess1Entry.visibility = View.VISIBLE
                             guess1Result.visibility = View.VISIBLE
                         }
@@ -87,29 +100,31 @@ class MainActivity : AppCompatActivity() {
                             guess2TextView.visibility = View.VISIBLE
                             guess2CheckTextView.visibility = View.VISIBLE
                             guess2Entry.text = enteredText
-                            guess2Result.text = result
+                            guess2Result.text = colorfulResult
                             guess2Entry.visibility = View.VISIBLE
                             guess2Result.visibility = View.VISIBLE
                         }
-                        3 -> {
+                        else -> {
                             guess3TextView.visibility = View.VISIBLE
                             guess3CheckTextView.visibility = View.VISIBLE
                             guess3Entry.text = enteredText
-                            guess3Result.text = result
+                            guess3Result.text = colorfulResult
                             guess3Entry.visibility = View.VISIBLE
                             guess3Result.visibility = View.VISIBLE
                         }
                     }
                     if (result == "OOOO"){
                         // TODO show confetti here
-                        Toast.makeText(applicationContext, "VIOLA! You guessed it!", Toast.LENGTH_SHORT).show()
-                        reset()
-                    }
-
-                    if (attempts == 3){
-                        reset()
+                        confetti.start(Presets.explode())
                         wordle.text = actualWord
+                        wordle.visibility = View.VISIBLE
+//                        Toast.makeText(applicationContext, "VIOLA! You guessed it!", Toast.LENGTH_SHORT).show()
+                        delayAndReset()
+                    } else if (attempts == 3){
+                        wordle.text = actualWord
+                        wordle.visibility = View.VISIBLE
                         Toast.makeText(applicationContext, "Lets try another word", Toast.LENGTH_SHORT).show()
+                        delayAndReset()
                     }
                 }
             }
@@ -161,7 +176,7 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    private fun reset(){
+    private fun reset() = runBlocking{
         attempts = 0
         for (textView in allTextViews){
             textView?.visibility = View.INVISIBLE
@@ -169,11 +184,37 @@ class MainActivity : AppCompatActivity() {
         userInput.setText("")
         actualWord = FourLetterWordList.getRandomFourLetterWord().uppercase()
         actualWord = "STAR"
+    }
 
-        runBlocking {
-            launch {
-                delay(2000)
+
+    private fun delayAndReset(){
+        Handler().postDelayed({ reset() }, 2000L)
+    }
+
+
+    private fun getColorfulString(guess: String, result: String): SpannableStringBuilder{
+        var spannableStringBuilder = SpannableStringBuilder()
+        for (i in guess.indices){
+            when (result[i]){
+                'O' -> { spannableStringBuilder.append(guess[i].toString(),
+                    ForegroundColorSpan(Color.GREEN), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                }
+                '+' -> { spannableStringBuilder.append(guess[i].toString(),
+                    ForegroundColorSpan(Color.BLACK), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                }
+                'X' -> { spannableStringBuilder.append(guess[i].toString(),
+                    ForegroundColorSpan(Color.RED), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                }
             }
         }
+        return spannableStringBuilder
     }
+
+
+    private fun hideKeyboard(){
+        val inputMethodManager = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        val currentFocusView = currentFocus
+        inputMethodManager.hideSoftInputFromWindow(currentFocusView?.windowToken, 0)
+    }
+
 }
