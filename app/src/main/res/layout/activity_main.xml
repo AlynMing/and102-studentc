@@ -192,7 +192,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="64dp"
         android:ems="10"
-        android:inputType="text"
+        android:inputType="textCapSentences"
         android:minHeight="48dp"
         android:text="word"
         android:selectAllOnFocus="true"

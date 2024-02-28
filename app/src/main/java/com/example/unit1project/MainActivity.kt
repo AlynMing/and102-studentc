@@ -183,7 +183,7 @@ class MainActivity : AppCompatActivity() {
         }
         userInput.setText("")
         actualWord = FourLetterWordList.getRandomFourLetterWord().uppercase()
-        actualWord = "STAR"
+//        actualWord = "STAR"
     }
 
 
