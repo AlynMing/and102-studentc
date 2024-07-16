@@ -34,7 +34,7 @@ The following **additional** features are implemented:
 
 Here's a walkthrough of implemented user stories:
 
-<img src='https://submissions.us-east-1.linodeobjects.com/and102/wn360w1j.gif' title='Video Walkthrough' width='' alt='Video Walkthrough' />
+<img src='YOUR_GIF_HERE' title='Video Walkthrough' width='' alt='Video Walkthrough' />
 
 GIF created with ...  **Kapp**
 
